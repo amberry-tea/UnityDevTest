@@ -7,6 +7,7 @@ public class ThirdPersonMovement : MonoBehaviour
 
     public CharacterController controller;
     public Transform cam;
+    public Rigidbody rb;
 
     public float speed = 6f;
     public float turnSmoothTime = 0.1f;
@@ -61,5 +62,9 @@ public class ThirdPersonMovement : MonoBehaviour
 
         //convert vel to displacement and Move the character
         controller.Move(vel * Time.deltaTime);
+    }
+
+    public void AddExplosionForce(float explosionForce, Vector3 explosionPosition, float explosionRadius){
+        
     }
 }
