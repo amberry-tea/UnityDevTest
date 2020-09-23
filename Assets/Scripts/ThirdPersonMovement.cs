@@ -7,15 +7,15 @@ public class ThirdPersonMovement : MonoBehaviour
 
     public CharacterController controller;
     public Transform cam;
-    public Rigidbody rb;
 
     public float speed = 6f;
     public float turnSmoothTime = 0.1f;
     public float gravity = 9.8f;
     public float jumpSpeed = 8;
+    public float drag = 12f;
 
     private float turnSmoothVelocity;
-    private float vSpeed = 0f;
+    private Vector3 velocity = Vector3.zero;
 
     void Update()
     {
@@ -23,6 +23,11 @@ public class ThirdPersonMovement : MonoBehaviour
         float horizontal = Input.GetAxisRaw("Horizontal");
         float vertical = Input.GetAxisRaw("Vertical");
         Vector3 direction = new Vector3(horizontal, 0f, vertical).normalized;
+        Vector3 moveDir = Vector3.zero;
+
+        //~~~~~~~~~
+        //MOVEMENT:
+        //~~~~~~~~~
 
         //If the player is moving... (Deadzone of 0.1f)
         if(direction.magnitude >= 0.1f) 
@@ -39,7 +44,7 @@ public class ThirdPersonMovement : MonoBehaviour
 
             //moveDir calculates the angle to adjust our movemen at.
             //We set this angle to be adjusted along the Y axis by the target angle we calculated above.
-            Vector3 moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
+            moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
             //When we move the character, normalize his movement direction!
             //Then, multiply by speed and deltaTime
             controller.Move(moveDir.normalized * speed * Time.deltaTime);
@@ -49,22 +54,35 @@ public class ThirdPersonMovement : MonoBehaviour
         //JUMPING:
         //~~~~~~~~
 
+        float friction = 0;
+
         if(controller.isGrounded){
-            vSpeed = 0; //no Y velocity on the ground
+            velocity.y = 0; //no Y velocity on the ground
+            friction = drag * 3;
             if (Input.GetKeyDown("space")){
-                vSpeed = jumpSpeed; //jump
+                velocity.y = jumpSpeed; //jump
             }
         }
 
+        //~~~~~~~~
+        //PHYSICS:
+        //~~~~~~~~
+
         //apply gravity acceleration to vertical speed
-        vSpeed -= gravity * Time.deltaTime;
-        Vector3 vel = new Vector3(0, vSpeed, 0);
+        velocity.y -= gravity * Time.deltaTime;
+
+        //Apply drag to the player (This is a bit jank but it works I guess)
+        velocity.x -= (drag + friction) * System.Math.Sign(velocity.x) * Time.deltaTime;
+        velocity.z -= (drag + friction) * System.Math.Sign(velocity.z) * Time.deltaTime;
+        //Prevent the drag from flipping inbetween positive and negative numbers
+        if(System.Math.Abs(velocity.x) <= 1f) velocity.x = 0;
+        if(System.Math.Abs(velocity.z) <= 1f) velocity.z = 0;
 
         //convert vel to displacement and Move the character
-        controller.Move(vel * Time.deltaTime);
+        controller.Move(velocity * Time.deltaTime);        
     }
 
-    public void AddExplosionForce(float explosionForce, Vector3 explosionPosition, float explosionRadius){
-        
+    public void AddExplosionForce(Vector3 direction, float speed){
+        velocity = direction * speed;
     }
 }

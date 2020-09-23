@@ -40,10 +40,20 @@ public class Grenade : MonoBehaviour
         Collider[] colliders = Physics.OverlapSphere(transform.position, radius);
 
         foreach(Collider nearbyObject in colliders){
-            Rigidbody rb = nearbyObject.GetComponent<Rigidbody>();
+            Rigidbody rb;
 
             //Add force
-            if(rb != null){
+            if(nearbyObject.tag == "Player")
+            {
+                //Math here should be reviewed to make sure its all right
+                //Computation should be localized to ThirdPersonMovement
+                Vector3 dir = nearbyObject.transform.position - transform.position;
+                float speed = ((radius - dir.magnitude) / radius) * force;
+                Debug.Log("Player was launched at speed of:" + speed);
+                nearbyObject.GetComponent<ThirdPersonMovement>().AddExplosionForce(dir.normalized, speed/50);
+            } 
+            else if((rb = nearbyObject.GetComponent<Rigidbody>()) != null)
+            {
                 rb.AddExplosionForce(force, transform.position, radius);
             }
 
