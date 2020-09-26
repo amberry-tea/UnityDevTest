@@ -181,7 +181,7 @@ GameObject:
   - component: {fileID: 6907279205204302364}
   - component: {fileID: 6907279204198559935}
   - component: {fileID: 6907279204198559936}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Third Person Player
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -291,7 +291,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6907279205305045371}
-  m_LocalRotation: {x: 0.117114425, y: -0.000000020343153, z: 0.000000029618706, w: 0.99311846}
+  m_LocalRotation: {x: 0.117114425, y: 0.000000013832799, z: 0.000000025588475, w: 0.99311846}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
@@ -625,7 +625,7 @@ GameObject:
   - component: {fileID: 6907279205728934327}
   - component: {fileID: 6907279205728934326}
   - component: {fileID: 6907279205728934325}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Player
   m_TagString: Untagged
   m_Icon: {fileID: 0}
