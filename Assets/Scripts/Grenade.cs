@@ -1,11 +1,13 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Cinemachine;
 
 public class Grenade : MonoBehaviour
 {
 
     public GameObject explosionEffect;
+    private CinemachineImpulseSource cinemachineImpulseSource;
 
     public float delay = 3f;
     public float radius = 5f;
@@ -18,6 +20,7 @@ public class Grenade : MonoBehaviour
     void Start()
     {
         countdown = delay;
+        cinemachineImpulseSource = GetComponent<CinemachineImpulseSource>();
     }
 
     // Update is called once per frame
@@ -27,6 +30,7 @@ public class Grenade : MonoBehaviour
         countdown -= Time.deltaTime; //reduce by time since last frame
         if(countdown <= 0 && !hasExploded){
             Explode();
+            cinemachineImpulseSource.GenerateImpulse();
             hasExploded = true;
         }
     }
