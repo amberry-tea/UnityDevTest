@@ -8,6 +8,7 @@ namespace TopDownShooter
     {
 
         float speed = 10;
+        float damage = 1;
         public LayerMask collisionMask; //Determine which layers the projectile can collide with
 
         public void SetSpeed(float newSpeed)
@@ -17,11 +18,9 @@ namespace TopDownShooter
 
         void Update()
         {
-            float moveDistance = speed * Time.deltaTime;
-
+            float moveDistance = speed * Time.deltaTime; //How far it has moved since the last frame
             CheckCollisions(moveDistance);
-
-            transform.Translate(Vector3.forward * moveDistance);
+            transform.Translate(Vector3.forward * moveDistance); //Move
         }
 
         /**
@@ -40,7 +39,12 @@ namespace TopDownShooter
             }
         }
 
-        void OnHitObject(RaycastHit hit){
+        void OnHitObject(RaycastHit hit)
+        {
+            IDamageable damageableObject = hit.collider.GetComponent<IDamageable>();
+            if(damageableObject != null){
+                damageableObject.TakeHit(damage, hit);
+            }
             print(hit.collider.gameObject.name);
             GameObject.Destroy(gameObject);
         }
