@@ -17,6 +17,11 @@ namespace TopDownShooter{
         }
 
         public void TakeHit(float damage, RaycastHit hit){
+            //Do stuff with hit variable, eg particle effects and knockback
+            TakeDamage(damage);
+        }
+
+        public void TakeDamage(float damage){
             health -= damage;
 
             if(health <= 0 && !dead)

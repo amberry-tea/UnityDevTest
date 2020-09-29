@@ -35,7 +35,7 @@ namespace TopDownShooter
         void NextWave()
         {
             currentWaveNumber++;
-            print("Wave " + currentWaveNumber);
+            //print("Wave " + currentWaveNumber);
             if(currentWaveNumber - 1 < waves.Length){
                 currentWave = waves[currentWaveNumber - 1];
 
@@ -45,7 +45,7 @@ namespace TopDownShooter
         }
 
         void OnEnemyDeath(){
-            print("Enemy died");
+            //print("Enemy died");
             enemiesRemainingAlive--;
 
             if(enemiesRemainingAlive == 0)

@@ -9,7 +9,21 @@ namespace TopDownShooter
 
         float speed = 10;
         float damage = 1;
+
+        float lifetime = 3;
+        //Adds a little extra to our collision raycasts so that we account for if the enemy is moving towards the projectile to prevent raycasting from inside the enemy
+        float skinWidth = .1f; 
+
         public LayerMask collisionMask; //Determine which layers the projectile can collide with
+
+        void Start(){
+            Destroy(gameObject, lifetime); //Destroy bullets after lifetime passes
+
+            Collider[] initialCollisions = Physics.OverlapSphere(transform.position, .1f, collisionMask); //Array of all the colliders our projectile intersects with at spawn
+            if(initialCollisions.Length > 0){
+                OnHitObject(initialCollisions[0]);
+            }
+        }
 
         public void SetSpeed(float newSpeed)
         {
@@ -33,7 +47,9 @@ namespace TopDownShooter
 
             //QueryTriggerInteraction determines if the raycast should also check trigger objects
             //We're checking for triggers since we've set the enemies to triggers
-            if (Physics.Raycast(ray, out hit, moveDistance, collisionMask, QueryTriggerInteraction.Collide))
+            //We add skinWidth to the length of the raycast to make sure we account for if an enemy is moving towards the projectile.
+            //This prevents the issue with raycasts that start from inside an object not intersecting with the object
+            if (Physics.Raycast(ray, out hit, moveDistance + skinWidth, collisionMask, QueryTriggerInteraction.Collide))
             {
                 OnHitObject(hit);
             }
@@ -45,7 +61,16 @@ namespace TopDownShooter
             if(damageableObject != null){
                 damageableObject.TakeHit(damage, hit);
             }
-            print(hit.collider.gameObject.name);
+            //print(hit.collider.gameObject.name);
+            GameObject.Destroy(gameObject);
+        }
+        void OnHitObject(Collider c)
+        {
+            IDamageable damageableObject = c.GetComponent<IDamageable>();
+            if(damageableObject != null){
+                damageableObject.TakeDamage(damage);
+            }
+            //print(c.gameObject.name);
             GameObject.Destroy(gameObject);
         }
     }
