@@ -10,13 +10,17 @@ namespace TopDownShooter
         public Transform obstaclePrefab;
         public Vector2 mapSize;
 
+
         [Range(0, 1)]
         public float outlinePercent;
+        [Range(0, 1)]
+        public float obstaclePercent;
 
         List<Coord> allTileCoords;
-        Queue<Coord> shuffledTileCoords;
+        Queue<Coord> shuffledTileCoords; //We use a queue so that every time we get a random coordinate, we move it to the back of the queue.
 
         public int seed = 10; //Random generation seed
+        Coord mapCenter;
 
         private void Start()
         {
@@ -34,6 +38,7 @@ namespace TopDownShooter
                 }
             }
             shuffledTileCoords = new Queue<Coord>(Utility.ShuffleArray(allTileCoords.ToArray(), seed));
+            mapCenter = new Coord((int)mapSize.x / 2, (int)mapSize.y / 2);
 
             string holderName = "Generated Map"; //The name of the empty gameObject to store tiles under
             if (transform.Find(holderName)) //Find the holder game object in the children of this object
@@ -62,17 +67,91 @@ namespace TopDownShooter
                 }
             }
 
-            int obstacleCount = 10;
-            for(int i = 0; i < obstacleCount; i++){
+            bool[,] obstacleMap = new bool[(int)mapSize.x, (int)mapSize.y]; //keeps track of what tiles are occupied by obstacles 
+
+            int obstacleCount = (int)(mapSize.x * mapSize.y * obstaclePercent);
+            int currentObstacleCount = 0;
+
+            for (int i = 0; i < obstacleCount; i++)
+            {
                 Coord randomCoord = GetRandomCoord();
-                Vector3 obstaclePosition = CoordToPosition(randomCoord.x, randomCoord.y);
-                Transform newObstacle = Instantiate(obstaclePrefab, obstaclePosition + Vector3.up * .5f, Quaternion.identity) as Transform;
-                newObstacle.parent = mapHolder;
+
+                obstacleMap[randomCoord.x, randomCoord.y] = true;
+                currentObstacleCount++;
+
+                //Makes sure the map is fully accessible. We cant spawn a tile in the center, because that is the origin
+                //from which we determine if things are accessible.
+                if (randomCoord != mapCenter && MapIsFullyAccessible(obstacleMap, currentObstacleCount))
+                {
+                    //Instantiate the obstacles
+                    Vector3 obstaclePosition = CoordToPosition(randomCoord.x, randomCoord.y);
+
+                    Transform newObstacle = Instantiate(obstaclePrefab, obstaclePosition + Vector3.up * .5f, Quaternion.identity) as Transform;
+                    newObstacle.parent = mapHolder;
+                }
+                else
+                {
+                    obstacleMap[randomCoord.x, randomCoord.y] = false;
+                    currentObstacleCount--;
+                }
             }
         }
 
+        /**
+        * Determines if the obstacles are blocking any paths in the map
+        *
+        * Uses a floodfill algorithm to count the number of empty tiles from the center of the map.
+        * If the number of tiles the floodfill finds does not equal the actual number of tiles without
+        * obstacles, then we return false.
+        */
+        bool MapIsFullyAccessible(bool[,] obstacleMap, int currentObstacleCount)
+        {
+            //Keeps track of what tiles we have already checked
+            bool[,] mapFlags = new bool[obstacleMap.GetLength(0), obstacleMap.GetLength(1)];
+            Queue<Coord> queue = new Queue<Coord>();
+
+            queue.Enqueue(mapCenter);
+            mapFlags[mapCenter.x, mapCenter.y] = true;
+
+            int accessibleTileCount = 1;
+
+            while (queue.Count > 0)
+            {
+                Coord tile = queue.Dequeue();
+                //Go through all of the adjacent tiles
+                for (int x = -1; x <= 1; x++)
+                {
+                    for (int y = -1; y <= 1; y++)
+                    {
+                        int neighbourX = tile.x + x;
+                        int neighbourY = tile.y + y;
+                        //Make sure we dont check the diagonals
+                        if (x == 0 || y == 0)
+                        {
+                            //Make sure the coordinate is within our map
+                            if (neighbourX >= 0 && neighbourX < obstacleMap.GetLength(0) && neighbourY >= 0 && neighbourY < obstacleMap.GetLength(1))
+                            {
+                                //Make sure we havent checked the tile and that its not an obstacle tile
+                                if (!mapFlags[neighbourX, neighbourY] && !obstacleMap[neighbourX, neighbourY])
+                                {
+                                    mapFlags[neighbourX, neighbourY] = true;
+                                    queue.Enqueue(new Coord(neighbourX, neighbourY)); //Look at this tile's neighbours
+                                    accessibleTileCount++;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            //How many tiles should there be?
+            int targetAccessibleTileCount = (int)(mapSize.x * mapSize.y - currentObstacleCount);
+            return targetAccessibleTileCount == accessibleTileCount;
+        }
+
         //Converts a coordinate on the tile map to a position in 3d space
-        Vector3 CoordToPosition(int x, int y){
+        Vector3 CoordToPosition(int x, int y)
+        {
             //To calculate the leftmost edge, we do -mapSize.x / 2
             //This puts the tile at the center of that position. We actually want the edge to be at the leftmost edge,
             //so we shift by 0.5
@@ -80,19 +159,32 @@ namespace TopDownShooter
         }
 
         //Gets a random coordinate by returning the next item in the random coord queue
-        public Coord GetRandomCoord() {
+        public Coord GetRandomCoord()
+        {
             Coord randomCoord = shuffledTileCoords.Dequeue(); //Pop the random coord
             shuffledTileCoords.Enqueue(randomCoord); //Requeue  that coord to the end of the queue
             return randomCoord;
         }
 
-        public struct Coord{
+        public struct Coord
+        {
             public int x;
             public int y;
 
-            public Coord(int _x, int _y){
+            public Coord(int _x, int _y)
+            {
                 x = _x;
                 y = _y;
+            }
+
+            public static bool operator ==(Coord c1, Coord c2)
+            {
+                return c1.x == c2.x && c1.y == c2.y;
+            }
+            
+            public static bool operator !=(Coord c1, Coord c2)
+            {
+                return !(c1==c2);
             }
         }
     }
