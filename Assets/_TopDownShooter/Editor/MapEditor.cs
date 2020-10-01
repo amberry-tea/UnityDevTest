@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 
-namespace TopDownShooter{
+namespace TopDownShooter
+{
     /**
     * This editor script MUST be within an Editor folder to work!
     *
@@ -14,7 +15,7 @@ namespace TopDownShooter{
     * OnInspectorGUI() function, where we tell it to generate new maps if the item being inspected
     * is typeof(MapGenerator).
     */
-    [CustomEditor (typeof(MapGenerator))] //Tells the editor what type of object it should be editing to activate
+    [CustomEditor(typeof(MapGenerator))] //Tells the editor what type of object it should be editing to activate
     public class MapEditor : Editor
     {
         /**
@@ -22,13 +23,23 @@ namespace TopDownShooter{
         */
         public override void OnInspectorGUI()
         {
-            base.OnInspectorGUI(); //Do all the default stuff
+            //base.OnInspectorGUI(); //Do all the default stuff....?
 
             //Target is the object that the inspector is looking at
             MapGenerator map = target as MapGenerator;
 
-            //Generates new maps
-            map.GenerateMap();
+            //If a value is changed in the inspector
+            if (DrawDefaultInspector())
+            {
+                //Generates new maps
+                map.GenerateMap();
+            }
+
+            //Creates a button, and if its clicked run the function
+            if (GUILayout.Button("Generate Map"))
+            {
+                map.GenerateMap();
+            }
         }
     }
 }

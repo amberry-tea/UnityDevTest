@@ -10,21 +10,22 @@ namespace TopDownShooter
         public Transform obstaclePrefab;
         public Transform navmeshFloor;
         public Transform navmeshMaskPrefab;
-        public Vector2 mapSize;
         public Vector2 maxMapSize;
 
         [Range(0, 1)]
         public float outlinePercent;
-        [Range(0, 1)]
-        public float obstaclePercent;
 
         public float tileSize;
 
         List<Coord> allTileCoords;
         Queue<Coord> shuffledTileCoords; //We use a queue so that every time we get a random coordinate, we move it to the back of the queue.
+        Queue<Coord> shuffledOpenTileCoords;
 
-        public int seed = 10; //Random generation seed
-        Coord mapCenter;
+        Transform[,] tileMap;
+
+        public Map[] maps;
+        public int mapIndex;
+        Map currentMap;
 
         private void Start()
         {
@@ -33,17 +34,23 @@ namespace TopDownShooter
 
         public void GenerateMap()
         {
+            currentMap = maps[mapIndex];
+            tileMap = new Transform[currentMap.mapSize.x, currentMap.mapSize.y];
+            System.Random prng = new System.Random(currentMap.seed);
+            GetComponent<BoxCollider>().size = new Vector3(currentMap.mapSize.x * tileSize, 0.5f, currentMap.mapSize.y * tileSize);
+
+            //Generating Coords
             allTileCoords = new List<Coord>();
-            for (int x = 0; x < mapSize.x; x++)
+            for (int x = 0; x < currentMap.mapSize.x; x++)
             {
-                for (int y = 0; y < mapSize.y; y++)
+                for (int y = 0; y < currentMap.mapSize.y; y++)
                 {
                     allTileCoords.Add(new Coord(x, y));
                 }
             }
-            shuffledTileCoords = new Queue<Coord>(Utility.ShuffleArray(allTileCoords.ToArray(), seed));
-            mapCenter = new Coord((int)mapSize.x / 2, (int)mapSize.y / 2);
+            shuffledTileCoords = new Queue<Coord>(Utility.ShuffleArray(allTileCoords.ToArray(), currentMap.seed));
 
+            //Create map holder object
             string holderName = "Generated Map"; //The name of the empty gameObject to store tiles under
             if (transform.Find(holderName)) //Find the holder game object in the children of this object
             {
@@ -53,11 +60,12 @@ namespace TopDownShooter
             Transform mapHolder = new GameObject(holderName).transform; //Create a new map holder after destroying the last one
             mapHolder.parent = transform; //Set the parent of the object to this objects transform
 
-            for (int x = 0; x < mapSize.x; x++)
+            //Spawning tiles
+            for (int x = 0; x < currentMap.mapSize.x; x++)
             {
-                for (int y = 0; y < mapSize.y; y++)
+                for (int y = 0; y < currentMap.mapSize.y; y++)
                 {
-                    //To calculate the leftmost edge, we do -mapSize.x / 2
+                    //To calculate the leftmost edge, we do -currentMap.mapSize.x / 2
                     //This puts the tile at the center of that position. We actually want the edge to be at the leftmost edge,
                     //so we shift by 0.5
                     Vector3 tilePosition = CoordToPosition(x, y);
@@ -68,13 +76,16 @@ namespace TopDownShooter
                     //Set all scale dimensions to the percent of outline.
                     newTile.localScale = Vector3.one * (1 - outlinePercent) * tileSize;
                     newTile.parent = mapHolder; //Add to holder
+                    tileMap[x,y] = newTile;
                 }
             }
 
-            bool[,] obstacleMap = new bool[(int)mapSize.x, (int)mapSize.y]; //keeps track of what tiles are occupied by obstacles 
+            //Spawning obstacles
+            bool[,] obstacleMap = new bool[(int)currentMap.mapSize.x, (int)currentMap.mapSize.y]; //keeps track of what tiles are occupied by obstacles 
 
-            int obstacleCount = (int)(mapSize.x * mapSize.y * obstaclePercent);
+            int obstacleCount = (int)(currentMap.mapSize.x * currentMap.mapSize.y * currentMap.obstaclePercent);
             int currentObstacleCount = 0;
+            List<Coord> allOpenCoords = new List<Coord>(allTileCoords); //By default, this will be all tiles and we will remove each tile when we generate the obstacle
 
             for (int i = 0; i < obstacleCount; i++)
             {
@@ -85,14 +96,23 @@ namespace TopDownShooter
 
                 //Makes sure the map is fully accessible. We cant spawn a tile in the center, because that is the origin
                 //from which we determine if things are accessible.
-                if (randomCoord != mapCenter && MapIsFullyAccessible(obstacleMap, currentObstacleCount))
+                if (randomCoord != currentMap.mapCenter && MapIsFullyAccessible(obstacleMap, currentObstacleCount))
                 {
                     //Instantiate the obstacles
+                    float obstacleHeight = Mathf.Lerp(currentMap.minObstacleHeight, currentMap.maxObstacleHeight, (float)prng.NextDouble());
                     Vector3 obstaclePosition = CoordToPosition(randomCoord.x, randomCoord.y);
 
-                    Transform newObstacle = Instantiate(obstaclePrefab, obstaclePosition + Vector3.up * .5f, Quaternion.identity) as Transform;
+                    Transform newObstacle = Instantiate(obstaclePrefab, obstaclePosition + Vector3.up * obstacleHeight/2, Quaternion.identity) as Transform;
                     newObstacle.parent = mapHolder;
-                    newObstacle.localScale = Vector3.one * (1 - outlinePercent) * tileSize;
+                    newObstacle.localScale = new Vector3( (1 - outlinePercent) * tileSize, obstacleHeight, (1 - outlinePercent) * tileSize );
+
+                    Renderer obstacleRenderer = newObstacle.GetComponent<Renderer>();
+                    Material obstacleMaterial = new Material(obstacleRenderer.sharedMaterial); //Create a new material from the obstacles current material
+                    float colourPercent = (float) randomCoord.y / currentMap.mapSize.y; //Gives us a gradient
+                    obstacleMaterial.color = Color.Lerp(currentMap.foregroundColor, currentMap.backgroundColor, colourPercent);
+                    obstacleRenderer.sharedMaterial = obstacleMaterial;
+
+                    allOpenCoords.Remove(randomCoord); // Remove coord from open tiles
                 }
                 else
                 {
@@ -101,24 +121,27 @@ namespace TopDownShooter
                 }
             }
 
-            //Masks the navmesh
+            //Make a queue of shuffled coordinates
+            shuffledOpenTileCoords = new Queue<Coord>(Utility.ShuffleArray(allOpenCoords.ToArray(), currentMap.seed));
+
+            //Create the navmesh mask
             //See notes for explanation of the formula for the position
             //By using Vector3.right or Vector3.left, we determine what direction to go in when we multiply it by the formula we made
-            Transform maskLeft = Instantiate(navmeshMaskPrefab, Vector3.left * (mapSize.x + maxMapSize.x) / 4 * tileSize, Quaternion.identity) as Transform;
+            Transform maskLeft = Instantiate(navmeshMaskPrefab, Vector3.left * (currentMap.mapSize.x + maxMapSize.x) / 4f * tileSize, Quaternion.identity) as Transform;
             maskLeft.parent = mapHolder;
-            maskLeft.localScale = new Vector3((maxMapSize.x - mapSize.x)/2, 1, mapSize.y) * tileSize; //Stretch it out to fill the area between the map edge and max map edge
-            
-            Transform maskRight = Instantiate(navmeshMaskPrefab, Vector3.right * (mapSize.x + maxMapSize.x) / 4 * tileSize, Quaternion.identity) as Transform;
+            maskLeft.localScale = new Vector3((maxMapSize.x - currentMap.mapSize.x) / 2f, 1, currentMap.mapSize.y) * tileSize; //Stretch it out to fill the area between the map edge and max map edge
+
+            Transform maskRight = Instantiate(navmeshMaskPrefab, Vector3.right * (currentMap.mapSize.x + maxMapSize.x) / 4f * tileSize, Quaternion.identity) as Transform;
             maskRight.parent = mapHolder;
-            maskRight.localScale = new Vector3((maxMapSize.x - mapSize.x)/2, 1, mapSize.y) * tileSize;
+            maskRight.localScale = new Vector3((maxMapSize.x - currentMap.mapSize.x) / 2f, 1, currentMap.mapSize.y) * tileSize;
 
-            Transform maskTop = Instantiate(navmeshMaskPrefab, Vector3.forward * (mapSize.y + maxMapSize.y) / 4 * tileSize, Quaternion.identity) as Transform;
+            Transform maskTop = Instantiate(navmeshMaskPrefab, Vector3.forward * (currentMap.mapSize.y + maxMapSize.y) / 4f * tileSize, Quaternion.identity) as Transform;
             maskTop.parent = mapHolder;
-            maskTop.localScale = new Vector3(maxMapSize.x, 1, (maxMapSize.y - mapSize.y)/2) * tileSize;
+            maskTop.localScale = new Vector3(maxMapSize.x, 1, (maxMapSize.y - currentMap.mapSize.y) / 2f) * tileSize;
 
-            Transform maskBottom = Instantiate(navmeshMaskPrefab, Vector3.back * (mapSize.y + maxMapSize.y) / 4 * tileSize, Quaternion.identity) as Transform;
+            Transform maskBottom = Instantiate(navmeshMaskPrefab, Vector3.back * (currentMap.mapSize.y + maxMapSize.y) / 4f * tileSize, Quaternion.identity) as Transform;
             maskBottom.parent = mapHolder;
-            maskBottom.localScale = new Vector3(maxMapSize.x, 1, (maxMapSize.y - mapSize.y)/2) * tileSize;
+            maskBottom.localScale = new Vector3(maxMapSize.x, 1, (maxMapSize.y - currentMap.mapSize.y) / 2f) * tileSize;
 
             //In this case, because the floor is rotated by 90 degrees, what we see as the Z axis is actually the objects Y axis
             navmeshFloor.localScale = new Vector3(maxMapSize.x, maxMapSize.y) * tileSize;
@@ -137,8 +160,8 @@ namespace TopDownShooter
             bool[,] mapFlags = new bool[obstacleMap.GetLength(0), obstacleMap.GetLength(1)];
             Queue<Coord> queue = new Queue<Coord>();
 
-            queue.Enqueue(mapCenter);
-            mapFlags[mapCenter.x, mapCenter.y] = true;
+            queue.Enqueue(currentMap.mapCenter);
+            mapFlags[currentMap.mapCenter.x, currentMap.mapCenter.y] = true;
 
             int accessibleTileCount = 1;
 
@@ -172,17 +195,17 @@ namespace TopDownShooter
             }
 
             //How many tiles should there be?
-            int targetAccessibleTileCount = (int)(mapSize.x * mapSize.y - currentObstacleCount);
+            int targetAccessibleTileCount = (int)(currentMap.mapSize.x * currentMap.mapSize.y - currentObstacleCount);
             return targetAccessibleTileCount == accessibleTileCount;
         }
 
         //Converts a coordinate on the tile map to a position in 3d space
         Vector3 CoordToPosition(int x, int y)
         {
-            //To calculate the leftmost edge, we do -mapSize.x / 2
+            //To calculate the leftmost edge, we do -currentMap.mapSize.x / 2
             //This puts the tile at the center of that position. We actually want the edge to be at the leftmost edge,
             //so we shift by 0.5
-            return new Vector3(-mapSize.x / 2 + 0.5f + x, 0, -mapSize.y / 2 + 0.5f + y) * tileSize;
+            return new Vector3(-currentMap.mapSize.x / 2f + 0.5f + x, 0, -currentMap.mapSize.y / 2f + 0.5f + y) * tileSize;
         }
 
         //Gets a random coordinate by returning the next item in the random coord queue
@@ -193,6 +216,7 @@ namespace TopDownShooter
             return randomCoord;
         }
 
+        [System.Serializable]
         public struct Coord
         {
             public int x;
@@ -208,11 +232,34 @@ namespace TopDownShooter
             {
                 return c1.x == c2.x && c1.y == c2.y;
             }
-            
+
             public static bool operator !=(Coord c1, Coord c2)
             {
-                return !(c1==c2);
+                return !(c1 == c2);
             }
+        }
+
+        [System.Serializable]
+        public class Map
+        {
+
+            public Coord mapSize;
+            [Range(0, 1)]
+            public float obstaclePercent;
+            public int seed;
+            public float minObstacleHeight;
+            public float maxObstacleHeight;
+            public Color foregroundColor;
+            public Color backgroundColor;
+
+            public Coord mapCenter
+            {
+                get
+                {
+                    return new Coord(mapSize.x / 2, mapSize.y / 2);
+                }
+            }
+
         }
     }
 }
