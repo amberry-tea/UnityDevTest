@@ -8,13 +8,17 @@ namespace TopDownShooter
     {
         public Transform tilePrefab;
         public Transform obstaclePrefab;
+        public Transform navmeshFloor;
+        public Transform navmeshMaskPrefab;
         public Vector2 mapSize;
-
+        public Vector2 maxMapSize;
 
         [Range(0, 1)]
         public float outlinePercent;
         [Range(0, 1)]
         public float obstaclePercent;
+
+        public float tileSize;
 
         List<Coord> allTileCoords;
         Queue<Coord> shuffledTileCoords; //We use a queue so that every time we get a random coordinate, we move it to the back of the queue.
@@ -62,7 +66,7 @@ namespace TopDownShooter
                     //This way the tile faces up
                     Transform newTile = Instantiate(tilePrefab, tilePosition, Quaternion.Euler(Vector3.right * 90)) as Transform;
                     //Set all scale dimensions to the percent of outline.
-                    newTile.localScale = Vector3.one * (1 - outlinePercent);
+                    newTile.localScale = Vector3.one * (1 - outlinePercent) * tileSize;
                     newTile.parent = mapHolder; //Add to holder
                 }
             }
@@ -88,6 +92,7 @@ namespace TopDownShooter
 
                     Transform newObstacle = Instantiate(obstaclePrefab, obstaclePosition + Vector3.up * .5f, Quaternion.identity) as Transform;
                     newObstacle.parent = mapHolder;
+                    newObstacle.localScale = Vector3.one * (1 - outlinePercent) * tileSize;
                 }
                 else
                 {
@@ -95,6 +100,28 @@ namespace TopDownShooter
                     currentObstacleCount--;
                 }
             }
+
+            //Masks the navmesh
+            //See notes for explanation of the formula for the position
+            //By using Vector3.right or Vector3.left, we determine what direction to go in when we multiply it by the formula we made
+            Transform maskLeft = Instantiate(navmeshMaskPrefab, Vector3.left * (mapSize.x + maxMapSize.x) / 4 * tileSize, Quaternion.identity) as Transform;
+            maskLeft.parent = mapHolder;
+            maskLeft.localScale = new Vector3((maxMapSize.x - mapSize.x)/2, 1, mapSize.y) * tileSize; //Stretch it out to fill the area between the map edge and max map edge
+            
+            Transform maskRight = Instantiate(navmeshMaskPrefab, Vector3.right * (mapSize.x + maxMapSize.x) / 4 * tileSize, Quaternion.identity) as Transform;
+            maskRight.parent = mapHolder;
+            maskRight.localScale = new Vector3((maxMapSize.x - mapSize.x)/2, 1, mapSize.y) * tileSize;
+
+            Transform maskTop = Instantiate(navmeshMaskPrefab, Vector3.forward * (mapSize.y + maxMapSize.y) / 4 * tileSize, Quaternion.identity) as Transform;
+            maskTop.parent = mapHolder;
+            maskTop.localScale = new Vector3(maxMapSize.x, 1, (maxMapSize.y - mapSize.y)/2) * tileSize;
+
+            Transform maskBottom = Instantiate(navmeshMaskPrefab, Vector3.back * (mapSize.y + maxMapSize.y) / 4 * tileSize, Quaternion.identity) as Transform;
+            maskBottom.parent = mapHolder;
+            maskBottom.localScale = new Vector3(maxMapSize.x, 1, (maxMapSize.y - mapSize.y)/2) * tileSize;
+
+            //In this case, because the floor is rotated by 90 degrees, what we see as the Z axis is actually the objects Y axis
+            navmeshFloor.localScale = new Vector3(maxMapSize.x, maxMapSize.y) * tileSize;
         }
 
         /**
@@ -155,7 +182,7 @@ namespace TopDownShooter
             //To calculate the leftmost edge, we do -mapSize.x / 2
             //This puts the tile at the center of that position. We actually want the edge to be at the leftmost edge,
             //so we shift by 0.5
-            return new Vector3(-mapSize.x / 2 + 0.5f + x, 0, -mapSize.y / 2 + 0.5f + y);
+            return new Vector3(-mapSize.x / 2 + 0.5f + x, 0, -mapSize.y / 2 + 0.5f + y) * tileSize;
         }
 
         //Gets a random coordinate by returning the next item in the random coord queue
