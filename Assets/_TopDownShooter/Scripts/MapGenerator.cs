@@ -76,7 +76,7 @@ namespace TopDownShooter
                     //Set all scale dimensions to the percent of outline.
                     newTile.localScale = Vector3.one * (1 - outlinePercent) * tileSize;
                     newTile.parent = mapHolder; //Add to holder
-                    tileMap[x,y] = newTile;
+                    tileMap[x, y] = newTile;
                 }
             }
 
@@ -102,13 +102,13 @@ namespace TopDownShooter
                     float obstacleHeight = Mathf.Lerp(currentMap.minObstacleHeight, currentMap.maxObstacleHeight, (float)prng.NextDouble());
                     Vector3 obstaclePosition = CoordToPosition(randomCoord.x, randomCoord.y);
 
-                    Transform newObstacle = Instantiate(obstaclePrefab, obstaclePosition + Vector3.up * obstacleHeight/2, Quaternion.identity) as Transform;
+                    Transform newObstacle = Instantiate(obstaclePrefab, obstaclePosition + Vector3.up * obstacleHeight / 2, Quaternion.identity) as Transform;
                     newObstacle.parent = mapHolder;
-                    newObstacle.localScale = new Vector3( (1 - outlinePercent) * tileSize, obstacleHeight, (1 - outlinePercent) * tileSize );
+                    newObstacle.localScale = new Vector3((1 - outlinePercent) * tileSize, obstacleHeight, (1 - outlinePercent) * tileSize);
 
                     Renderer obstacleRenderer = newObstacle.GetComponent<Renderer>();
                     Material obstacleMaterial = new Material(obstacleRenderer.sharedMaterial); //Create a new material from the obstacles current material
-                    float colourPercent = (float) randomCoord.y / currentMap.mapSize.y; //Gives us a gradient
+                    float colourPercent = (float)randomCoord.y / currentMap.mapSize.y; //Gives us a gradient
                     obstacleMaterial.color = Color.Lerp(currentMap.foregroundColor, currentMap.backgroundColor, colourPercent);
                     obstacleRenderer.sharedMaterial = obstacleMaterial;
 
@@ -121,7 +121,7 @@ namespace TopDownShooter
                 }
             }
 
-            //Make a queue of shuffled coordinates
+            //Make a queue of shuffled open tiles
             shuffledOpenTileCoords = new Queue<Coord>(Utility.ShuffleArray(allOpenCoords.ToArray(), currentMap.seed));
 
             //Create the navmesh mask
@@ -208,12 +208,32 @@ namespace TopDownShooter
             return new Vector3(-currentMap.mapSize.x / 2f + 0.5f + x, 0, -currentMap.mapSize.y / 2f + 0.5f + y) * tileSize;
         }
 
+        //Opposite of CoordToPosition() formula (inverse)
+        public Transform GetTileFromPosition(Vector3 position)
+        {
+            //Inverse of CoordToPosition()
+            int x = Mathf.RoundToInt(position.x / tileSize + (currentMap.mapSize.x - 1) / 2f);
+            int y = Mathf.RoundToInt(position.z / tileSize + (currentMap.mapSize.y - 1) / 2f); //WARNING: In 3D for top down, Z is what we would consider to be Y
+            //Lock X and Y to the bounds of the tileMap coordinates
+            x = Mathf.Clamp(x, 0, tileMap.GetLength(0)-1);
+            y = Mathf.Clamp(y, 0, tileMap.GetLength(1)-1);
+
+            return tileMap[x, y];
+        }
+
         //Gets a random coordinate by returning the next item in the random coord queue
         public Coord GetRandomCoord()
         {
             Coord randomCoord = shuffledTileCoords.Dequeue(); //Pop the random coord
             shuffledTileCoords.Enqueue(randomCoord); //Requeue  that coord to the end of the queue
             return randomCoord;
+        }
+
+        public Transform GetRandomOpenTile()
+        {
+            Coord randomCoord = shuffledOpenTileCoords.Dequeue(); //Pop the random coord
+            shuffledTileCoords.Enqueue(randomCoord); //Requeue  that coord to the end of the queue
+            return tileMap[randomCoord.x, randomCoord.y];
         }
 
         [System.Serializable]
