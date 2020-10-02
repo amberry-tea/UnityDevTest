@@ -27,8 +27,13 @@ namespace TopDownShooter
         public int mapIndex;
         Map currentMap;
 
-        private void Start()
+        void Awake()
         {
+            FindObjectOfType<Spawner>().OnNewWave += OnNewWave;
+        }
+
+        void OnNewWave(int waveNumber){
+            mapIndex = waveNumber - 1; //array starts at 0
             GenerateMap();
         }
 
@@ -246,6 +251,18 @@ namespace TopDownShooter
             {
                 x = _x;
                 y = _y;
+            }
+
+            public override bool Equals(object c2){
+                if(!(c2 is Coord cord))
+                    return false;
+
+                return this.x == ((Coord)c2).x && this.y == ((Coord)c2).y;
+            }
+
+            public override int GetHashCode()
+            {
+                return x.GetHashCode() * 17 + y.GetHashCode();
             }
 
             public static bool operator ==(Coord c1, Coord c2)

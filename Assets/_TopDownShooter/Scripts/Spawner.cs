@@ -29,6 +29,8 @@ namespace TopDownShooter
 
         bool isDisabled;
 
+        public event System.Action<int> OnNewWave;
+
         void Start()
         {
             playerEntity = FindObjectOfType<Player>();
@@ -41,6 +43,7 @@ namespace TopDownShooter
             map = FindObjectOfType<MapGenerator>();
             NextWave();
         }
+
         void Update()
         {
             if (!isDisabled)
@@ -98,19 +101,28 @@ namespace TopDownShooter
         void NextWave()
         {
             currentWaveNumber++;
-            //print("Wave " + currentWaveNumber);
+
             if (currentWaveNumber - 1 < waves.Length)
             {
                 currentWave = waves[currentWaveNumber - 1];
 
                 enemiesRemainingToSpawn = currentWave.enemyCount;
                 enemiesRemainingAlive = enemiesRemainingToSpawn;
+
+                if(OnNewWave != null){
+                    OnNewWave(currentWaveNumber);
+                }
             }
         }
 
         void OnPlayerDeath()
         {
             isDisabled = true;
+        }
+
+        void ResetPlayerPosition(){
+            //Spawn player in middle of the map and a little bit up so he drops in
+            playerT.position = map.GetTileFromPosition(Vector3.zero).position + Vector3.up * 3;
         }
 
         void OnEnemyDeath()
@@ -121,6 +133,7 @@ namespace TopDownShooter
             if (enemiesRemainingAlive == 0)
             {
                 NextWave();
+                ResetPlayerPosition();
             }
         }
 

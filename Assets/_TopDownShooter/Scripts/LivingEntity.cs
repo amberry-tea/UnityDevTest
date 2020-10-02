@@ -28,6 +28,7 @@ namespace TopDownShooter{
                 Die();
         }
 
+        [ContextMenu("Self Destruct")]
         protected void Die(){
             dead = true;
             if(OnDeath != null){
