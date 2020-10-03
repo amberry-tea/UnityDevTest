@@ -21,7 +21,7 @@ namespace TopDownShooter
 
             Collider[] initialCollisions = Physics.OverlapSphere(transform.position, .1f, collisionMask); //Array of all the colliders our projectile intersects with at spawn
             if(initialCollisions.Length > 0){
-                OnHitObject(initialCollisions[0]);
+                OnHitObject(initialCollisions[0], transform.position);
             }
         }
 
@@ -51,24 +51,15 @@ namespace TopDownShooter
             //This prevents the issue with raycasts that start from inside an object not intersecting with the object
             if (Physics.Raycast(ray, out hit, moveDistance + skinWidth, collisionMask, QueryTriggerInteraction.Collide))
             {
-                OnHitObject(hit);
+                OnHitObject(hit.collider, hit.point);
             }
         }
 
-        void OnHitObject(RaycastHit hit)
-        {
-            IDamageable damageableObject = hit.collider.GetComponent<IDamageable>();
-            if(damageableObject != null){
-                damageableObject.TakeHit(damage, hit);
-            }
-            //print(hit.collider.gameObject.name);
-            GameObject.Destroy(gameObject);
-        }
-        void OnHitObject(Collider c)
+        void OnHitObject(Collider c, Vector3 hitPoint)
         {
             IDamageable damageableObject = c.GetComponent<IDamageable>();
             if(damageableObject != null){
-                damageableObject.TakeDamage(damage);
+                damageableObject.TakeHit(damage, hitPoint, transform.forward);
             }
             //print(c.gameObject.name);
             GameObject.Destroy(gameObject);

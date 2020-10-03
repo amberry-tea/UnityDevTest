@@ -12,6 +12,8 @@ namespace TopDownShooter
         public enum State { Idle, Chasing, Attacking };
         State currentState;
 
+        public ParticleSystem deathEffect;
+
         NavMeshAgent pathfinder;
         Transform target;
         LivingEntity targetEntity;
@@ -51,6 +53,15 @@ namespace TopDownShooter
 
                 StartCoroutine(UpdatePath());
             }
+        }
+
+        public override void TakeHit(float damage, Vector3 hitPoint, Vector3 hitDirection)
+        {
+            if(damage >= health){
+                //Make a particle effect and destroy it afterwards
+                Destroy(Instantiate(deathEffect.gameObject, hitPoint, Quaternion.FromToRotation(Vector3.forward, hitDirection)) as GameObject, deathEffect.main.startLifetime.constant);
+            }
+            base.TakeHit(damage, hitPoint, hitDirection);
         }
 
         void OnTargetDeath()
