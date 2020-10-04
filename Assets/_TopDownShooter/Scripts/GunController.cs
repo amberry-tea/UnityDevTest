@@ -42,5 +42,10 @@ namespace TopDownShooter
                 equippedGun.OnTriggerRelease();
             }
         }
+        public float GunHeight {
+            get{
+                return weaponHold.position.y;
+            }
+        }
     }
 }

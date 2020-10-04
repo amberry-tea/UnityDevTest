@@ -7,12 +7,15 @@ namespace TopDownShooter
     /**
     * For getting the players inputs
     */
-    [RequireComponent (typeof(PlayerController))]
-    [RequireComponent (typeof(GunController))]
+    [RequireComponent(typeof(PlayerController))]
+    [RequireComponent(typeof(GunController))]
     public class Player : LivingEntity
     {
 
         public float moveSpeed = 5;
+
+        public Crosshair crosshair;
+
         PlayerController controller;
         GunController gunController;
         Camera viewCamera;
@@ -44,24 +47,38 @@ namespace TopDownShooter
             //Draw a ray from the camera where the mouse is
             Ray ray = viewCamera.ScreenPointToRay(Input.mousePosition);
             //Create a plane where the ground is. Dont bother getting the plane from the game, too problematic.
-            Plane groundPlane = new Plane(Vector3.up, Vector3.zero); //First vector tells where the plane should point, second vector is a point the vector should intersect (for tilt)
+            Plane groundPlane = new Plane(Vector3.up, Vector3.up * gunController.GunHeight); //First vector tells where the plane should point, second vector is a point the vector should intersect (for tilt)
             float rayDistance;
 
-            if(groundPlane.Raycast(ray, out rayDistance)){ //If ray intersects with groundplane, return true and give out the distance the ray traveled.
+            if (groundPlane.Raycast(ray, out rayDistance))
+            { //If ray intersects with groundplane, return true and give out the distance the ray traveled.
                 Vector3 point = ray.GetPoint(rayDistance); //Get the point where the ray intersected the plane
                 //Debug.DrawLine(ray.origin, point, Color.red);
                 controller.LookAt(point);
+
+                crosshair.transform.position = point;
+                crosshair.DetectTargets(ray);
             }
 
             ////////////////////
             //Weapon input
             ////////////////////
 
-            if(Input.GetMouseButton(0)){ //if mouse button is held down
+            if (Input.GetMouseButton(0))
+            { //if mouse button is held down
                 gunController.OnTriggerHold();
             }
-            if(Input.GetMouseButtonUp(0)){ //if mouse button is let go
+            if (Input.GetMouseButtonUp(0))
+            { //if mouse button is let go
                 gunController.OnTriggerRelease();
+            }
+
+            ////////////////////
+            //Menu input
+            ////////////////////
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                Cursor.visible = !Cursor.visible;
             }
         }
     }

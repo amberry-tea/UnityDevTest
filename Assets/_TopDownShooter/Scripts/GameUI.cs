@@ -19,6 +19,7 @@ namespace TopDownShooter
         }
 
         void OnGameOver(){
+            Cursor.visible = true;
             StartCoroutine(Fade(Color.clear, Color.black, fadeTime));
             gameOverUI.SetActive(true);
         }
