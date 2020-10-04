@@ -4,6 +4,7 @@ using UnityEngine;
 
 namespace TopDownShooter
 {
+    [RequireComponent(typeof(Muzzleflash))]
     public class Gun : MonoBehaviour
     {
         public Transform muzzle;
@@ -11,7 +12,15 @@ namespace TopDownShooter
         public float msBetweenShots = 100;
         public float muzzleVelocity = 35; //speed that bullet leaves the gun
 
+        public Transform shell;
+        public Transform shellEjection; //Point to spawn the shells from
+        Muzzleflash muzzleflash;
+
         float nextShotTime;
+
+        private void Start() {
+            muzzleflash = GetComponent<Muzzleflash>();
+        }
 
         public void Shoot()
         {
@@ -20,6 +29,9 @@ namespace TopDownShooter
                 nextShotTime = Time.time + msBetweenShots / 1000; //Divide by 1000 to get ms from s
                 Projectile newProjectile = Instantiate(projectile, muzzle.position, muzzle.rotation) as Projectile;
                 newProjectile.SetSpeed(muzzleVelocity);
+
+                Instantiate(shell, shellEjection.position, shellEjection.rotation);
+                muzzleflash.Activate();
             }
         }
 
