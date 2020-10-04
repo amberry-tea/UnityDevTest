@@ -6,6 +6,9 @@ namespace TopDownShooter
 {
     public class Projectile : MonoBehaviour
     {
+        public Gradient tracerGradient;
+
+        TrailRenderer tracer;
 
         float speed = 10;
         float damage = 1;
@@ -17,6 +20,8 @@ namespace TopDownShooter
         public LayerMask collisionMask; //Determine which layers the projectile can collide with
 
         void Start(){
+            GetComponent<TrailRenderer>().colorGradient = tracerGradient;
+
             Destroy(gameObject, lifetime); //Destroy bullets after lifetime passes
 
             Collider[] initialCollisions = Physics.OverlapSphere(transform.position, .1f, collisionMask); //Array of all the colliders our projectile intersects with at spawn

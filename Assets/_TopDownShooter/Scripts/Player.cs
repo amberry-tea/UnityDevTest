@@ -58,7 +58,10 @@ namespace TopDownShooter
             ////////////////////
 
             if(Input.GetMouseButton(0)){ //if mouse button is held down
-                gunController.Shoot();
+                gunController.OnTriggerHold();
+            }
+            if(Input.GetMouseButtonUp(0)){ //if mouse button is let go
+                gunController.OnTriggerRelease();
             }
         }
     }
