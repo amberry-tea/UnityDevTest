@@ -9,6 +9,7 @@ namespace TopDownShooter
         public Transform tilePrefab;
         public Transform obstaclePrefab;
         public Transform navmeshFloor;
+        public Transform mapFloor;
         public Transform navmeshMaskPrefab;
         public Vector2 maxMapSize;
 
@@ -42,7 +43,7 @@ namespace TopDownShooter
             currentMap = maps[mapIndex];
             tileMap = new Transform[currentMap.mapSize.x, currentMap.mapSize.y];
             System.Random prng = new System.Random(currentMap.seed);
-            GetComponent<BoxCollider>().size = new Vector3(currentMap.mapSize.x * tileSize, 0.5f, currentMap.mapSize.y * tileSize);
+            //GetComponent<BoxCollider>().size = new Vector3(currentMap.mapSize.x * tileSize, 0.5f, currentMap.mapSize.y * tileSize); //Set box collider for floor (changed to mapFloor)
 
             //Generating Coords
             allTileCoords = new List<Coord>();
@@ -150,6 +151,7 @@ namespace TopDownShooter
 
             //In this case, because the floor is rotated by 90 degrees, what we see as the Z axis is actually the objects Y axis
             navmeshFloor.localScale = new Vector3(maxMapSize.x, maxMapSize.y) * tileSize;
+            mapFloor.localScale = new Vector3(currentMap.mapSize.x * tileSize, currentMap.mapSize.y * tileSize);
         }
 
         /**

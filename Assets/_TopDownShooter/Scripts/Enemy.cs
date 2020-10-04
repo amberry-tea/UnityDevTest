@@ -31,37 +31,59 @@ namespace TopDownShooter
 
         bool hasTarget;
 
-        protected override void Start()
-        {
-            base.Start();
+        private void Awake() {
             pathfinder = GetComponent<NavMeshAgent>();
-            skinMaterial = GetComponent<Renderer>().material;
-            originalColor = skinMaterial.color;
 
             //DONT assume the player exists in the scene: this enemy may spawn after the player has died!
             if (GameObject.FindGameObjectWithTag("Player") != null) //Set up chasing code
             {
-                currentState = State.Chasing;
                 hasTarget = true;
 
                 target = GameObject.FindGameObjectWithTag("Player").transform;
                 targetEntity = target.GetComponent<LivingEntity>();
-                targetEntity.OnDeath += OnTargetDeath;
 
                 myCollisionRadius = GetComponent<CapsuleCollider>().radius;
                 targetCollisionRadius = target.GetComponent<CapsuleCollider>().radius;
+            }
+        }
+
+        protected override void Start()
+        {
+            base.Start();
+
+            //DONT assume the player exists in the scene: this enemy may spawn after the player has died!
+            if (hasTarget) //Set up chasing code
+            {
+                currentState = State.Chasing;
+                targetEntity.OnDeath += OnTargetDeath;
 
                 StartCoroutine(UpdatePath());
             }
         }
 
+        public void SetCharacteristics(float moveSpeed, int hitsToKillPlayer, float enemyHealth, Color skinColor)
+        {
+            pathfinder.speed = moveSpeed;
+            if (hasTarget)
+            {
+                damage = Mathf.Ceil(targetEntity.startingHealth / hitsToKillPlayer);
+            }
+            startingHealth = enemyHealth;
+
+            skinMaterial = GetComponent<Renderer>().material;
+            skinMaterial.color = skinColor;
+            originalColor = skinMaterial.color;
+        }
+
         public override void TakeHit(float damage, Vector3 hitPoint, Vector3 hitDirection)
         {
-            if(damage >= health){
+            if (damage >= health)
+            {
                 //Make a particle effect and destroy it afterwards
                 Destroy(Instantiate(deathEffect.gameObject, hitPoint, Quaternion.FromToRotation(Vector3.forward, hitDirection)) as GameObject, deathEffect.main.startLifetime.constant);
             }
             base.TakeHit(damage, hitPoint, hitDirection);
+            
         }
 
         void OnTargetDeath()
@@ -72,7 +94,8 @@ namespace TopDownShooter
 
         void Update()
         {
-            if(hasTarget){
+            if (hasTarget)
+            {
                 if (Time.time > nextAttackTime)
                 {
                     //CALCULATING DISTANCE BETWEEN TARGETS THE RIGHT WAY
@@ -109,7 +132,7 @@ namespace TopDownShooter
             {
                 percent += Time.deltaTime * attackSpeed;
 
-                if(percent >= .5  && !hasAppliedDamage)
+                if (percent >= .5 && !hasAppliedDamage)
                 {
                     hasAppliedDamage = true;
                     targetEntity.TakeDamage(damage);
