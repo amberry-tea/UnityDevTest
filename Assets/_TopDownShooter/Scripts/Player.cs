@@ -58,7 +58,15 @@ namespace TopDownShooter
 
                 crosshair.transform.position = point;
                 crosshair.DetectTargets(ray);
+                
+                //print(new Vector2(point.x, point.z) - new Vector2(transform.position.x, transform.position.z)); //Check the dist between the player and the crosshair
+                if((new Vector2(point.x, point.z) - new Vector2(transform.position.x, transform.position.z)).sqrMagnitude > 1){ //If the crosshair is too close, stop aiming
+                    gunController.Aim(point);
+
+                }
             }
+
+
 
             ////////////////////
             //Weapon input
@@ -71,6 +79,10 @@ namespace TopDownShooter
             if (Input.GetMouseButtonUp(0))
             { //if mouse button is let go
                 gunController.OnTriggerRelease();
+            }
+            if (Input.GetKeyDown(KeyCode.R))
+            {
+                gunController.Reload();
             }
 
             ////////////////////
