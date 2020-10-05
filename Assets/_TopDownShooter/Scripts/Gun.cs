@@ -14,6 +14,7 @@ namespace TopDownShooter
         };
 
         public FireMode fireMode;
+        public bool reloadEjectsShells = false;
 
         public Transform[] projectileSpawn;
         public Projectile projectile;
@@ -61,7 +62,7 @@ namespace TopDownShooter
 
             if (!isReloading && projectilesRemainingInMag == 0)
             {
-                Reload();
+                Invoke("Reload", .2f);
             }
         }
 
@@ -98,7 +99,9 @@ namespace TopDownShooter
                     Projectile newProjectile = Instantiate(projectile, projectileSpawn[i].position, projectileSpawn[i].rotation) as Projectile;
                     newProjectile.SetSpeed(muzzleVelocity);
                 }
-                Instantiate(shell, shellEjection.position, shellEjection.rotation);
+                if(!reloadEjectsShells){
+                    Instantiate(shell, shellEjection.position, shellEjection.rotation);
+                }
                 muzzleflash.Activate();
 
                 transform.localPosition -= Vector3.forward * Random.Range(kickMinMax.x, kickMinMax.y); //Gun kickback
@@ -120,7 +123,13 @@ namespace TopDownShooter
         {
             isReloading = true;
 
-            yield return new WaitForSeconds(0.2f);
+            //yield return new WaitForSeconds(0.1f);
+
+            if(reloadEjectsShells){
+                for(int i = 0; i < projectileSpawn.Length - 1; i++){
+                    Instantiate(shell, shellEjection.position, shellEjection.rotation);
+                }
+            }
 
             float reloadSpeed = 1f / reloadTime;
             float percent = 0;
