@@ -34,6 +34,8 @@ namespace TopDownShooter
         [Header("Effects")]
         public Transform shell;
         public Transform shellEjection; //Point to spawn the shells from
+        public AudioClip shootAudio;
+        public AudioClip reloadAudio;
         Muzzleflash muzzleflash;
 
         float nextShotTime;
@@ -108,6 +110,8 @@ namespace TopDownShooter
 
                 recoilAngle += Random.Range(recoilAngleMinMax.x, recoilAngleMinMax.y);
                 recoilAngle = Mathf.Clamp(recoilAngle, 0, 30);
+
+                AudioManager.instance.PlaySound(shootAudio, transform.position);
             }
         }
 
@@ -116,6 +120,7 @@ namespace TopDownShooter
             if (!isReloading && projectilesRemainingInMag != projectilesPerMag)
             {
                 StartCoroutine("AnimateReload");
+                AudioManager.instance.PlaySound(reloadAudio, transform.position);
             }
         }
 
