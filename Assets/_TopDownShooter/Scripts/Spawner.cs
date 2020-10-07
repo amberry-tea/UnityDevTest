@@ -69,10 +69,13 @@ namespace TopDownShooter
                     StartCoroutine("SpawnEnemy");
                 }
             }
-            if(devMode){
-                if(Input.GetKeyDown(KeyCode.Return)){
+            if (devMode)
+            {
+                if (Input.GetKeyDown(KeyCode.Return))
+                {
                     StopCoroutine("SpawnEnemy");
-                    foreach(Enemy enemy in FindObjectsOfType<Enemy>()){
+                    foreach (Enemy enemy in FindObjectsOfType<Enemy>())
+                    {
                         GameObject.Destroy(enemy.gameObject);
                     }
                     NextWave();
@@ -112,6 +115,11 @@ namespace TopDownShooter
 
         void NextWave()
         {
+            if (currentWaveNumber > 0) //Dont play for the start of the first level
+            {
+                AudioManager.instance.PlaySound2D("Level Complete");
+            }
+
             currentWaveNumber++;
 
             if (currentWaveNumber - 1 < waves.Length)
@@ -121,7 +129,8 @@ namespace TopDownShooter
                 enemiesRemainingToSpawn = currentWave.enemyCount;
                 enemiesRemainingAlive = enemiesRemainingToSpawn;
 
-                if(OnNewWave != null){
+                if (OnNewWave != null)
+                {
                     OnNewWave(currentWaveNumber);
                 }
             }
@@ -132,7 +141,8 @@ namespace TopDownShooter
             isDisabled = true;
         }
 
-        void ResetPlayerPosition(){
+        void ResetPlayerPosition()
+        {
             //Spawn player in middle of the map and a little bit up so he drops in
             playerT.position = map.GetTileFromPosition(Vector3.zero).position + Vector3.up * 3;
         }

@@ -6,10 +6,15 @@ namespace TopDownShooter
 {
     public class AudioManager : MonoBehaviour
     {
+
+        public enum AudioChannel{MASTER, SFX, MUSIC};
+
         float masterVolumePercent = .2f;
         float sfxVolumePercent = 1;
         float musicVolumePercent = 1;
 
+        //Used for making 2D sounds that dont have a position, ie level complete
+        AudioSource sfx2DSource;
         //Having the audio source object lets you dynamically adjust the settings while audio plays, eg. volume
         //Using two audio sources, we can cross fade music when changing.
         AudioSource[] musicSources;
@@ -21,22 +26,45 @@ namespace TopDownShooter
         Transform audioListener;
         Transform playerT;
 
+        SoundLibrary library;
+
         private void Awake()
         {
 
-            instance = this; //Initialize singleton variable
-
-            //Create two audio sources
-            musicSources = new AudioSource[2];
-            for (int i = 0; i < 2; i++)
+            if (instance != null)
             {
-                GameObject newMusicSource = new GameObject("Music Source " + (i + 1));
-                musicSources[i] = newMusicSource.AddComponent<AudioSource>();
-                newMusicSource.transform.parent = transform; //Put the new music sources as the child object of this for organization
+                Destroy(gameObject); //If the singleton already exists, do not instantiate this one
             }
+            else
+            {
+                instance = this; //Initialize singleton variable
+                DontDestroyOnLoad(gameObject);
 
-            audioListener = FindObjectOfType<AudioListener>().transform;
-            playerT = FindObjectOfType<Player>().transform;
+
+                library = GetComponent<SoundLibrary>();
+
+                //Create two audio sources
+                musicSources = new AudioSource[2];
+                for (int i = 0; i < 2; i++)
+                {
+                    GameObject newMusicSource = new GameObject("Music Source " + (i + 1));
+                    musicSources[i] = newMusicSource.AddComponent<AudioSource>();
+                    newMusicSource.transform.parent = transform; //Put the new music sources as the child object of this for organization
+                }
+
+                GameObject newSfx2DSource = new GameObject("2D SFX Source");
+                sfx2DSource = newSfx2DSource.AddComponent<AudioSource>();
+                sfx2DSource.transform.parent = transform; 
+
+                audioListener = FindObjectOfType<AudioListener>().transform;
+                playerT = FindObjectOfType<Player>().transform;
+
+                //Load the players settings
+                //If not existant, it will just use the default settings we already set at the top of the class
+                masterVolumePercent = PlayerPrefs.GetFloat("master vol", masterVolumePercent);
+                sfxVolumePercent = PlayerPrefs.GetFloat("sfx vol", sfxVolumePercent);
+                musicVolumePercent = PlayerPrefs.GetFloat("musiv vol", musicVolumePercent);
+            }
         }
 
         private void Update()
@@ -45,6 +73,29 @@ namespace TopDownShooter
             {
                 audioListener.position = playerT.position;
             }
+        }
+
+        public void SetVolume(float volumePercent, AudioChannel channel){
+            switch(channel){
+            case AudioChannel.MASTER:
+                masterVolumePercent = volumePercent;
+                break;
+            case AudioChannel.SFX:
+                sfxVolumePercent = volumePercent;
+                break;
+            case AudioChannel.MUSIC:
+                musicVolumePercent = volumePercent;
+                break;
+            }
+
+            //Update the music sources with the new volume
+            musicSources[0].volume = musicVolumePercent * masterVolumePercent;
+            musicSources[1].volume = musicVolumePercent * masterVolumePercent;
+
+            //Save the new volume settings as player settings
+            PlayerPrefs.SetFloat("master vol", masterVolumePercent);
+            PlayerPrefs.SetFloat("sfx vol", sfxVolumePercent);
+            PlayerPrefs.SetFloat("musiv vol", musicVolumePercent);
         }
 
         public void PlayMusic(AudioClip clip, float fadeDuration = 1)
@@ -81,6 +132,13 @@ namespace TopDownShooter
             }
         }
 
+        public void PlaySound(string soundName, Vector3 pos)
+        {
+            PlaySound(library.GetClipFromName(soundName), pos);
+        }
 
+        public void PlaySound2D(string soundName){
+            sfx2DSource.PlayOneShot(library.GetClipFromName(soundName) , sfxVolumePercent * masterVolumePercent);
+        }
     }
 }

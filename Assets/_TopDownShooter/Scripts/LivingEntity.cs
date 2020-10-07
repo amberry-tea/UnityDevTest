@@ -29,7 +29,7 @@ namespace TopDownShooter{
         }
 
         [ContextMenu("Self Destruct")]
-        protected void Die(){
+        public virtual void Die(){
             dead = true;
             if(OnDeath != null){
                 OnDeath(); //Broadcast an event of death

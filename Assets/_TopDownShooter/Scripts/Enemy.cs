@@ -77,9 +77,11 @@ namespace TopDownShooter
 
         public override void TakeHit(float damage, Vector3 hitPoint, Vector3 hitDirection)
         {
+            AudioManager.instance.PlaySound("Impact", transform.position);
             if (damage >= health)
             {
                 //Make a particle effect and destroy it afterwards
+                AudioManager.instance.PlaySound("Enemy Death", transform.position);
                 Destroy(Instantiate(deathEffect.gameObject, hitPoint, Quaternion.FromToRotation(Vector3.forward, hitDirection)) as GameObject, deathEffect.main.startLifetime.constant);
             }
             base.TakeHit(damage, hitPoint, hitDirection);
@@ -106,6 +108,7 @@ namespace TopDownShooter
                     if (sqrDstToTarget < Mathf.Pow(attackDistanceThreshold + myCollisionRadius + targetCollisionRadius, 2))
                     {
                         nextAttackTime = Time.time + timeBetweenAttacks;
+                        AudioManager.instance.PlaySound("Enemy Attack", transform.position);
                         StartCoroutine(Attack());
                     }
                 }
