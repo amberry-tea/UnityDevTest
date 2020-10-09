@@ -9,9 +9,10 @@ namespace TopDownShooter
 
         public enum AudioChannel{MASTER, SFX, MUSIC};
 
-        float masterVolumePercent = .2f;
-        float sfxVolumePercent = 1;
-        float musicVolumePercent = 1;
+        //Accessible but not settable
+        public float masterVolumePercent {get; private set;}
+        public float sfxVolumePercent {get; private set;}
+        public float musicVolumePercent {get; private set;}
 
         //Used for making 2D sounds that dont have a position, ie level complete
         AudioSource sfx2DSource;
@@ -57,13 +58,16 @@ namespace TopDownShooter
                 sfx2DSource.transform.parent = transform; 
 
                 audioListener = FindObjectOfType<AudioListener>().transform;
-                playerT = FindObjectOfType<Player>().transform;
+                if(FindObjectOfType<Player>() != null){
+                    playerT = FindObjectOfType<Player>().transform;
+                }
 
                 //Load the players settings
-                //If not existant, it will just use the default settings we already set at the top of the class
-                masterVolumePercent = PlayerPrefs.GetFloat("master vol", masterVolumePercent);
-                sfxVolumePercent = PlayerPrefs.GetFloat("sfx vol", sfxVolumePercent);
-                musicVolumePercent = PlayerPrefs.GetFloat("musiv vol", musicVolumePercent);
+                //If not existant, use default value of 1
+                masterVolumePercent = PlayerPrefs.GetFloat("master vol", .2f);
+                sfxVolumePercent = PlayerPrefs.GetFloat("sfx vol", 1);
+                musicVolumePercent = PlayerPrefs.GetFloat("musiv vol", 1);
+                PlayerPrefs.Save();
             }
         }
 
@@ -96,6 +100,7 @@ namespace TopDownShooter
             PlayerPrefs.SetFloat("master vol", masterVolumePercent);
             PlayerPrefs.SetFloat("sfx vol", sfxVolumePercent);
             PlayerPrefs.SetFloat("musiv vol", musicVolumePercent);
+            PlayerPrefs.Save();
         }
 
         public void PlayMusic(AudioClip clip, float fadeDuration = 1)
@@ -132,11 +137,13 @@ namespace TopDownShooter
             }
         }
 
+        //Uses the sound library we made, which is a map of sound names to sounds
         public void PlaySound(string soundName, Vector3 pos)
         {
             PlaySound(library.GetClipFromName(soundName), pos);
         }
 
+        //Plays sounds in 2D rather than 3D space. Doesnt need a position.
         public void PlaySound2D(string soundName){
             sfx2DSource.PlayOneShot(library.GetClipFromName(soundName) , sfxVolumePercent * masterVolumePercent);
         }
