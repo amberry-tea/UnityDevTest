@@ -102,6 +102,11 @@ namespace TopDownShooter
             {
                 Cursor.visible = !Cursor.visible;
             }
+
+            //Kill the player if they fall off
+            if(transform.position.y < -10){
+                TakeDamage(health);
+            }
         }
 
         public override void Die()

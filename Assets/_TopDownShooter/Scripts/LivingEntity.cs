@@ -7,7 +7,7 @@ namespace TopDownShooter{
     {
         public float startingHealth;
 
-        protected float health; //protected keeps it only avaliable to child classes
+        public float health {get; protected set;} //protected keeps it only avaliable to child classes
         protected bool dead;
 
         public event System.Action OnDeath;

@@ -13,6 +13,7 @@ namespace TopDownShooter
         State currentState;
 
         public ParticleSystem deathEffect;
+        public static event System.Action OnDeathStatic;
 
         NavMeshAgent pathfinder;
         Transform target;
@@ -70,7 +71,11 @@ namespace TopDownShooter
             }
             startingHealth = enemyHealth;
 
-            skinMaterial = GetComponent<Renderer>().sharedMaterial;
+            //Set the death effect material
+            ParticleSystem.MainModule main = deathEffect.main;
+            main.startColor = new Color(skinColor.r, skinColor.g, skinColor.b, 1);
+
+            skinMaterial = GetComponent<Renderer>().material;
             skinMaterial.color = skinColor;
             originalColor = skinMaterial.color;
         }
@@ -81,6 +86,9 @@ namespace TopDownShooter
             if (damage >= health)
             {
                 //Make a particle effect and destroy it afterwards
+                if(OnDeathStatic != null){
+                    OnDeathStatic();
+                }
                 AudioManager.instance.PlaySound("Enemy Death", transform.position);
                 Destroy(Instantiate(deathEffect.gameObject, hitPoint, Quaternion.FromToRotation(Vector3.forward, hitDirection)) as GameObject, deathEffect.main.startLifetime.constant);
             }

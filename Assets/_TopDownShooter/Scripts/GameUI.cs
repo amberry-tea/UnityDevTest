@@ -15,19 +15,34 @@ namespace TopDownShooter
         public RectTransform newWaveBanner;
         public Text newWaveTitle;
         public Text newWaveEnemyCount;
+        public Text scoreUI;
+        public Text gameOverScoreUI;
+        public RectTransform healthBar;
 
         Spawner spawner;
+        Player player;
 
         // Start is called before the first frame update
         void Start()
         {
-            FindObjectOfType<Player>().OnDeath += OnGameOver;
+            player = FindObjectOfType<Player>();
+            player.OnDeath += OnGameOver; 
         }
 
         private void Awake()
         {
             spawner = FindObjectOfType<Spawner>();
             spawner.OnNewWave += OnNewWave;
+        }
+
+        private void Update() {
+            scoreUI.text = ScoreKeeper.score.ToString("D6"); //Format the score to be 6 digits, ie 000001
+
+            float healthPercent = 0; //If the player is null, the health will be zero
+            if(player != null){
+                healthPercent = player.health / player.startingHealth;
+            }
+            healthBar.localScale = new Vector3(healthPercent, 1, 1); //Rescale the health bar
         }
 
         void OnNewWave(int waveNumber)
@@ -70,7 +85,11 @@ namespace TopDownShooter
         void OnGameOver()
         {
             Cursor.visible = true;
-            StartCoroutine(Fade(Color.clear, Color.black, fadeTime));
+            StartCoroutine(Fade(Color.clear, new Color(0,0,0,.9f), fadeTime));
+            gameOverScoreUI.text = scoreUI.text; //Update the game over text with the score
+            //Hide all the other game UI elements
+            scoreUI.gameObject.SetActive(false);
+            healthBar.transform.parent.gameObject.SetActive(false);
             gameOverUI.SetActive(true);
         }
 
@@ -91,6 +110,10 @@ namespace TopDownShooter
         public void StartNewGame()
         {
             SceneManager.LoadScene("Game");
+        }
+
+        public void returnToMainMenu(){
+            SceneManager.LoadScene("Menu");
         }
     }
 }
