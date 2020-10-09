@@ -15,6 +15,7 @@ namespace TopDownShooter
         private void Start()
         {
             SceneManager.sceneLoaded += OnSceneLoaded;
+            OnSceneLoaded(new Scene(), new LoadSceneMode());
         }
 
         void Update()
