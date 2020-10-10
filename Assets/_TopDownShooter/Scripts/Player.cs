@@ -114,5 +114,10 @@ namespace TopDownShooter
             AudioManager.instance.PlaySound("Player Death", transform.position);
             base.Die();
         }
+
+        public override void TakeDamage(float damage){
+            base.TakeDamage(damage);
+            PostProcessingManager.instance.PlayerHealthChanged(health, startingHealth);
+        }
     }
 }
