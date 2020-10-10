@@ -16,10 +16,10 @@ TagManager:
   - Ground
   - Physics
   - Player
-  - 
-  - 
-  - 
-  - 
+  - Enemy
+  - Props
+  - Effects
+  - Post Processing Volume
   - 
   - 
   - 
