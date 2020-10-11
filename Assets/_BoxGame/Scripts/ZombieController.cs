@@ -3,48 +3,52 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
-public class ZombieController : MonoBehaviour
+namespace BoxGame
 {
-
-    public float lookRadius = 10f;
-
-    Transform target;
-    NavMeshAgent agent;
-
-    void Awake()
+    public class ZombieController : MonoBehaviour
     {
-        agent = GetComponent<NavMeshAgent>();
-        target = PlayerManager.instance.player.transform;
-    }
 
-    private void OnDrawGizmosSelected() 
-    {
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, lookRadius);
-    }
+        public float lookRadius = 10f;
 
-    private void Update() {
-        float distance = Vector3.Distance(target.position, transform.position);
+        Transform target;
+        NavMeshAgent agent;
 
-        if( distance <= lookRadius)
+        void Awake()
         {
-            agent.SetDestination(target.position);
+            agent = GetComponent<NavMeshAgent>();
+            target = PlayerManager.instance.player.transform;
+        }
 
-            if(distance <= agent.stoppingDistance)
+        private void OnDrawGizmosSelected()
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(transform.position, lookRadius);
+        }
+
+        private void Update()
+        {
+            float distance = Vector3.Distance(target.position, transform.position);
+
+            if (distance <= lookRadius)
             {
-                //Attack the target
-                //Face the target
-                FaceTarget();
+                agent.SetDestination(target.position);
+
+                if (distance <= agent.stoppingDistance)
+                {
+                    //Attack the target
+                    //Face the target
+                    FaceTarget();
+                }
             }
         }
+
+        private void FaceTarget()
+        {
+            Vector3 direction = (target.position - transform.position).normalized;
+            Quaternion lookRotation = Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
+            transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * 5f); //Slerp smooths out the turning
+        }
+
+
     }
-
-    private void FaceTarget()
-    {
-        Vector3 direction = (target.position - transform.position).normalized;
-        Quaternion lookRotation = Quaternion.LookRotation(new Vector3(direction.x, 0, direction.z));
-        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * 5f); //Slerp smooths out the turning
-    }
-
-
 }

@@ -2,15 +2,18 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class EndTrigger : MonoBehaviour
+namespace BoxGame
 {
-    public GameManager gameManager;
-
-    void OnTriggerEnter(Collider target)
+    public class EndTrigger : MonoBehaviour
     {
-        if(target.tag == "Player")
+        public GameManager gameManager;
+
+        void OnTriggerEnter(Collider target)
         {
-            gameManager.CompleteLevel();
+            if (target.tag == "Player")
+            {
+                gameManager.CompleteLevel();
+            }
         }
     }
 }

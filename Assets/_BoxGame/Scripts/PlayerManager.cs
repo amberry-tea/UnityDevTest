@@ -2,19 +2,22 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerManager : MonoBehaviour
+namespace BoxGame
 {
-    #region Singleton
-
-    public static PlayerManager instance;
-
-    private void Awake() 
+    public class PlayerManager : MonoBehaviour
     {
-        instance = this;    
+        #region Singleton
+
+        public static PlayerManager instance;
+
+        private void Awake()
+        {
+            instance = this;
+        }
+
+        #endregion
+
+        public GameObject player;
+
     }
-
-    #endregion
-
-    public GameObject player;
-
 }

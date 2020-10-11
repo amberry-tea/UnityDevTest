@@ -12,26 +12,29 @@ using UnityEngine;
 * is because the x and y values are not adjusted for the camera
 * positioning.
 */
-public class CameraShake : MonoBehaviour
+namespace BoxGame
 {
-    public IEnumerator Shake (float duration, float magnitude)
+    public class CameraShake : MonoBehaviour
     {
-        Vector3 originalPos = transform.localPosition; //local position for a position relative to parent
-
-        float elapsed = 0.0f;
-
-        while (elapsed < duration) //while time is less than our duration
+        public IEnumerator Shake(float duration, float magnitude)
         {
-            float x = Random.Range(-1f, 1f) * magnitude;
-            float y = Random.Range(-1f, 1f) * magnitude;
+            Vector3 originalPos = transform.localPosition; //local position for a position relative to parent
 
-            transform.localPosition = new Vector3(x, y, originalPos.z);
+            float elapsed = 0.0f;
 
-            elapsed += Time.deltaTime;
+            while (elapsed < duration) //while time is less than our duration
+            {
+                float x = Random.Range(-1f, 1f) * magnitude;
+                float y = Random.Range(-1f, 1f) * magnitude;
 
-            yield return null; //wait until next frame
+                transform.localPosition = new Vector3(x, y, originalPos.z);
+
+                elapsed += Time.deltaTime;
+
+                yield return null; //wait until next frame
+            }
+
+            transform.localPosition = originalPos; //put camera back
         }
-
-        transform.localPosition = originalPos; //put camera back
     }
 }
