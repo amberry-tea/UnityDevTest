@@ -17,7 +17,7 @@ namespace RPG
 
         public virtual void Interact()
         {
-            Debug.Log("Interacting With" + transform.name);
+            Debug.Log("Interacting With " + transform.name);
         }
 
         void Update()
@@ -27,7 +27,7 @@ namespace RPG
                 float distance = Vector3.Distance(player.position, interactionTransform.position);
                 if (distance <= radius)
                 {
-                    Debug.Log("Interact");
+                    Interact();
                     hasInteracted = true;
                 }
             }
@@ -49,6 +49,10 @@ namespace RPG
 
         private void OnDrawGizmosSelected()
         {
+            if (interactionTransform == null)
+            {
+                interactionTransform = transform;
+            }
             Gizmos.color = Color.yellow;
             Gizmos.DrawWireSphere(interactionTransform.position, radius);
         }

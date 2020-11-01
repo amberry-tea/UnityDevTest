@@ -24,7 +24,7 @@ namespace RPG
         {
             //The speed percent is the agents current speed divided by the maximum speed
             float speedPercent = agent.velocity.magnitude / agent.speed;
-            animator.SetFloat("speedPercent", speedPercent, .1f, Time.deltaTime); //Set the sped percent to our speed percent var, and dampen it so it takes .1 seconds of smoothing between values
+            animator.SetFloat("speedPercent", speedPercent, locomotionAnimationSmoothTime, Time.deltaTime); //Set the sped percent to our speed percent var, and dampen it so it takes .1 seconds of smoothing between values
         }
     }
 }
