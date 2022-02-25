@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using UnityEngine.EventSystems;
 using UnityEngine;
 
 namespace RPG
@@ -24,6 +23,10 @@ namespace RPG
         // Update is called once per frame
         void Update()
         {
+            // If the mouse is hovering over the UI (inventory), then dont bother doing any movement
+            if(EventSystem.current.IsPointerOverGameObject())
+                return;
+
             //Move to a position with leftclick
             if (Input.GetMouseButtonDown(0))
             {

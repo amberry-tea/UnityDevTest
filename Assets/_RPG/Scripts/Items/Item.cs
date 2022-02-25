@@ -12,5 +12,12 @@ namespace RPG
         new public string name = "New Item";
         public Sprite icon = null; //The icon that shows up in the inventory
         public bool isDefaultItem = false; //For the default items like underwear that we dont want to appear in the inventory
+
+        public virtual void Use()
+        {
+            //Only some items should implement Use(), eg. crafting items are used differently than potions
+
+            Debug.Log("Using" + name);
+        }
     }
 }
